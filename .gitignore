@@ -1,3 +1,16 @@
+# Dataset and large files
+data/
+*.pth
+*.pt
+*.h5
+*.hdf5
+
+# Outputs and experiments
+outputs/
+runs/
+wandb/
+checkpoints/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
