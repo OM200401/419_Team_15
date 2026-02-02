@@ -31,6 +31,10 @@ The SoccerNet Jersey Number dataset consists of:
 - Karim Jassani
 - Milan Bertolutti
 
+## Navigation
+
+* [Progress Journal](https://github.com/OM200401/419_Team_15/blob/documentation/docs/progress_journal.md)
+
 ## Project Links
 
 - **Challenge Page**: [SoccerNet Jersey Number Recognition](https://www.soccer-net.org/tasks/jersey-number-recognition)
