@@ -115,16 +115,144 @@ For EvalAI submissions, create a JSON file with the same format as the ground tr
 }
 ```
 
-## Development Roadmap
+## Neural Network Implementation
 
-1. **Data Exploration**: Analyze dataset characteristics and jersey number distribution
-2. **Baseline Model**: Implement a simple baseline (e.g., frame averaging with CNN)
-3. **Advanced Models**: Experiment with:
-   - Temporal models (LSTM, GRU, 3D CNNs)
-   - Keyframe identification approaches
-   - Ensemble methods
-4. **Optimization**: Hyperparameter tuning and model refinement
-5. **Submission**: Generate predictions and submit to EvalAI
+We are implementing a multi-phase approach based on the research paper **"Jersey Number Recognition using Keyframe Identification from Low-Resolution Broadcast Videos"** by Balaji et al. (University of Waterloo - SARG UWaterloo team, 73.77% accuracy).
+
+### Architecture Overview
+
+#### Phase 1: Baseline CNN with Frame Averaging
+**Current Implementation**: [src/models/baseline.py](src/models/baseline.py)
+
+- **Backbone**: ResNet-50 (pre-trained on ImageNet)
+- **Approach**: Process each frame independently through CNN, then aggregate predictions
+- **Aggregation Methods**: 
+  - Mean pooling across frame logits
+  - Max pooling for highest confidence frames
+  - Soft voting with averaged probabilities
+- **Expected Accuracy**: 45-55%
+
+**Key Components**:
+```python
+class BaselineCNN(nn.Module):
+    - backbone: ResNet-50/34 or EfficientNet-B0
+    - classifier: FC layers (2048 → 512 → 100)
+    - forward(): Processes variable-length frame sequences
+```
+
+#### Phase 2: Keyframe Selection Module
+**Status**: Planned
+
+The paper's key insight is that jersey numbers are only visible in a small subset of frames. We will implement:
+
+- **Blur Detection**: Laplacian variance to identify sharp frames
+- **Scale Scoring**: Prefer frames where player occupies more pixels
+- **Orientation Detection**: Identify frames showing player's back
+- **Top-K Selection**: Select k best frames per tracklet (k=5-10)
+
+**Expected Improvement**: +15-20% accuracy → ~65-70%
+
+#### Phase 3: Temporal Modeling
+**Status**: Planned
+
+Add temporal context to capture motion patterns:
+
+**Option A - LSTM/GRU**:
+- Process selected keyframes in sequence
+- Bidirectional LSTM to capture temporal dependencies
+- Hidden state: 512 dimensions
+
+**Option B - 3D CNN**:
+- SlowFast networks or X3D
+- Direct spatio-temporal feature extraction
+- More computationally intensive
+
+**Option C - Temporal Attention**:
+- Self-attention over frame features
+- Learn which frames are most informative
+- Transformer-based aggregation
+
+**Expected Improvement**: +5-8% accuracy → ~70-75%
+
+#### Phase 4: Multi-Task Learning
+**Status**: Planned
+
+Separate prediction heads for each digit:
+
+- **Tens Digit Head**: Predicts 0-9 (for numbers 10-99)
+- **Units Digit Head**: Predicts 0-9
+- **Combined Loss**: Weighted sum of both digit losses
+- **Handles**: Single-digit numbers (0-9) and two-digit (10-99)
+
+**Benefits**:
+- Better gradient flow for each digit
+- Handles digit confusion separately
+- Improves accuracy on similar-looking numbers (e.g., 18 vs 13)
+
+**Expected Improvement**: +2-3% accuracy → ~73-75%
+
+### Training Strategy
+
+1. **Data Augmentation**:
+   - Random rotation (±15°)
+   - Color jitter (brightness, contrast, saturation)
+   - Random erasing (simulate occlusions)
+   - Gaussian blur (simulate motion blur)
+
+2. **Optimization**:
+   - Adam optimizer with learning rate 1e-4
+   - ReduceLROnPlateau scheduler (patience=5)
+   - Batch size: 8 tracklets
+   - Frame sampling: 10 frames per tracklet (uniform spacing)
+
+3. **Loss Function**:
+   - Cross-entropy for classification
+   - Class weighting for imbalanced jersey numbers
+   - Special handling for `-1` (not visible) class
+
+### Quick Start Training
+
+Download dataset:
+```bash
+python scripts/download_data.py --data-root data/SoccerNet
+```
+
+Train baseline model:
+```bash
+python scripts/train_baseline.py \
+    --data-root data/SoccerNet \
+    --backbone resnet50 \
+    --batch-size 8 \
+    --epochs 50 \
+    --max-frames 10 \
+    --output-dir outputs/baseline
+```
+
+### Expected Results by Phase
+
+| Phase | Approach | Target Accuracy |
+|-------|----------|----------------|
+| 0 | Random Baseline | ~3.9% |
+| 1 | CNN + Frame Averaging | 45-55% |
+| 2 | + Keyframe Selection | 65-70% |
+| 3 | + Temporal Modeling | 70-75% |
+| 4 | + Multi-Task Learning | **73-75%** |
+
+### Project Structure
+
+```
+├── src/
+│   ├── data/
+│   │   └── dataset.py              # JerseyNumberDataset loader
+│   └── models/
+│       └── baseline.py             # Baseline CNN implementation
+├── scripts/
+│   ├── download_data.py            # Dataset download utility
+│   └── train_baseline.py           # Training script
+├── notebooks/                      # Jupyter notebooks for exploration
+├── outputs/                        # Model checkpoints and results
+└── data/                          # Dataset (gitignored)
+```
 
 ## Reference Leaderboard (2023 Challenge)
 
