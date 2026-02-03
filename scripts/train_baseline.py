@@ -17,7 +17,7 @@ from src.data.dataset import JerseyNumberDataset, collate_fn
 from src.models.baseline import BaselineCNN
 
 
-def train_epoch(model, dataloader, criterion, optimizer, device):
+def train_epoch(model, dataloader, criterion, optimizer, device, scaler=None):
     """Train for one epoch."""
     model.train()
     total_loss = 0
@@ -33,14 +33,23 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
             frames = frames.to(device)
         labels = labels.to(device)
         
-        # Forward pass
+        # Forward pass with mixed precision
         optimizer.zero_grad()
-        outputs = model(frames)
-        loss = criterion(outputs, labels)
         
-        # Backward pass
-        loss.backward()
-        optimizer.step()
+        if scaler is not None:
+            with torch.cuda.amp.autocast():
+                outputs = model(frames)
+                loss = criterion(outputs, labels)
+            
+            # Backward pass with gradient scaling
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            outputs = model(frames)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
         
         # Metrics
         total_loss += loss.item()
@@ -99,7 +108,7 @@ def evaluate(model, dataloader, criterion, device):
 
 def main():
     parser = argparse.ArgumentParser(description="Train baseline model")
-    parser.add_argument("--data-root", type=str, default="data/SoccerNet",
+    parser.add_argument("--data-root", type=str, default="data/SoccerNet/jersey-2023",
                         help="Root directory of dataset")
     parser.add_argument("--batch-size", type=int, default=8,
                         help="Batch size")
@@ -114,14 +123,29 @@ def main():
                         help="CNN backbone")
     parser.add_argument("--output-dir", type=str, default="outputs",
                         help="Directory to save outputs")
-    parser.add_argument("--num-workers", type=int, default=4,
-                        help="Number of data loading workers")
+    parser.add_argument("--num-workers", type=int, default=0,
+                        help="Number of data loading workers (use 0 on Windows)")
+    parser.add_argument("--resume", type=str, default=None,
+                        help="Path to checkpoint to resume from (default: None)")
+    parser.add_argument("--amp", action="store_true",
+                        help="Use automatic mixed precision for faster training")
     
     args = parser.parse_args()
     
-    # Setup
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    # Setup - Force CUDA initialization
+    torch.cuda.init()  # Initialize CUDA
+    
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+        torch.cuda.set_device(device)
+        print(f"Using device: cuda:0")
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"CUDA Version: {torch.version.cuda}")
+        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+    else:
+        device = torch.device("cpu")
+        print(f"Using device: cpu")
+        print("Warning: CUDA not available, training will be slow!")
     
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -165,7 +189,7 @@ def main():
     # Create model
     print(f"\nCreating model with {args.backbone} backbone...")
     model = BaselineCNN(
-        num_classes=100,
+        num_classes=101,  # 0-99 for jersey numbers, 100 for "not visible" (-1)
         backbone=args.backbone,
         pretrained=True
     ).to(device)
@@ -177,16 +201,37 @@ def main():
         optimizer, mode='max', patience=5, factor=0.5
     )
     
-    # Training loop
+    # Mixed precision training
+    scaler = torch.amp.GradScaler('cuda') if args.amp else None
+    if args.amp:
+        print("Using Automatic Mixed Precision (AMP) for faster training")
+    
+    # Resume from checkpoint if specified
+    start_epoch = 0
     best_acc = 0
     results = []
     
+    if args.resume:
+        if Path(args.resume).exists():
+            print(f"\nResuming from checkpoint: {args.resume}")
+            checkpoint = torch.load(args.resume)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            start_epoch = checkpoint['epoch']
+            best_acc = checkpoint.get('best_acc', 0)
+            if Path(output_dir / "results.json").exists():
+                with open(output_dir / "results.json", 'r') as f:
+                    results = json.load(f)
+            print(f"Resuming from epoch {start_epoch}, best accuracy: {best_acc:.2f}%")
+        else:
+            print(f"\nWarning: Checkpoint not found at {args.resume}, starting from scratch")
+    
     print("\nStarting training...")
-    for epoch in range(args.epochs):
+    for epoch in range(start_epoch, args.epochs):
         print(f"\nEpoch {epoch+1}/{args.epochs}")
         
         train_loss, train_acc = train_epoch(
-            model, train_loader, criterion, optimizer, device
+            model, train_loader, criterion, optimizer, device, scaler
         )
         
         test_loss, test_acc = evaluate(
@@ -214,8 +259,18 @@ def main():
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'test_acc': test_acc,
+                'best_acc': best_acc,
             }, output_dir / "best_model.pth")
             print(f"Saved new best model (acc: {best_acc:.2f}%)")
+        
+        # Save last checkpoint (for resuming)
+        torch.save({
+            'epoch': epoch + 1,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'test_acc': test_acc,
+            'best_acc': best_acc,
+        }, output_dir / "last_checkpoint.pth")
         
         # Save results
         with open(output_dir / "results.json", 'w') as f:
