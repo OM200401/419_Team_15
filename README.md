@@ -75,7 +75,7 @@ mySNdl = SNdl(LocalDirectory="data/SoccerNet")
 mySNdl.downloadDataTask(task="jersey-2023", split=["train", "test", "challenge"])
 ```
 
-## Quick Commands (Current)
+## Quick Commands
 
 Download dataset with the script:
 
@@ -86,13 +86,7 @@ python scripts/download_data.py --data-root data/SoccerNet
 Train baseline model:
 
 ```bash
-python scripts/train_baseline.py \
-  --data-root data/SoccerNet \
-  --backbone resnet50 \
-  --batch-size 8 \
-  --epochs 50 \
-  --max-frames 10 \
-  --output-dir outputs/baseline
+python scripts/train_baseline.py --data-root data/SoccerNet --backbone resnet50 --batch-size 8 --epochs 50 --max-frames 10 --output-dir outputs/baseline
 ```
 
 Test random samples:
@@ -104,22 +98,13 @@ python scripts/test_model.py  --checkpoint outputs/best_model.pth --data-root da
 Test a single tracklet:
 
 ```bash
-python scripts/test_model.py \
-  --checkpoint outputs/best_model.pth \
-  --data-root data/SoccerNet/jersey-2023 \
-  --split test \
-  --player-id <PLAYER_ID>
+python scripts/test_model.py --checkpoint outputs/best_model.pth --data-root data/SoccerNet/jersey-2023 --split test --player-id <PLAYER_ID>
 ```
 
 Evaluate full-split accuracy:
 
 ```bash
-python scripts/evaluate_model.py \
-  --checkpoint outputs/best_model.pth \
-  --data-root data/SoccerNet/jersey-2023 \
-  --split test \
-  --max-frames 10 \
-  --aggregate mean
+python scripts/evaluate_model.py --checkpoint outputs/best_model.pth --data-root data/SoccerNet/jersey-2023 --split test --max-frames 10 --aggregate mean
 ```
 
 ## Dataset Format
@@ -172,13 +157,7 @@ python scripts/download_data.py --data-root data/SoccerNet
 
 Train baseline model:
 ```bash
-python scripts/train_baseline.py \
-    --data-root data/SoccerNet \
-    --backbone resnet50 \
-    --batch-size 8 \
-    --epochs 50 \
-    --max-frames 10 \
-    --output-dir outputs/baseline
+python scripts/train_baseline.py --data-root data/SoccerNet --backbone resnet50 --batch-size 8 --epochs 50 --max-frames 10 --output-dir outputs/baseline
 ```
 
 ### Project Structure
@@ -208,6 +187,10 @@ python scripts/train_baseline.py \
 | zzzzz | 88.08% |
 | MT-IOT | 81.7% |
 | Baseline (Random) | 3.93% |
+
+## Conclusions (Current Baseline)
+
+Our current baseline CNN (frame-level backbone with mean aggregation across frames) achieves 29.31% Top-1 accuracy on the SoccerNet jersey-2023 test split using the trained checkpoint in `outputs/best_model.pth`. This confirms the baseline is working end-to-end but still leaves significant room for improvement due to low-resolution frames and limited jersey visibility per tracklet. The next steps are focused on keyframe selection, temporal modeling, and stronger augmentations to improve recognition performance.
 
 ## Citation
 
