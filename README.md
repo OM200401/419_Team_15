@@ -97,11 +97,7 @@ python scripts/train_baseline.py \
 Test random samples:
 
 ```bash
-python scripts/test_model.py \
-  --checkpoint outputs/best_model.pth \
-  --data-root data/SoccerNet/jersey-2023 \
-  --split test \
-  --num-samples 10
+python scripts/test_model.py  --checkpoint outputs/best_model.pth --data-root data/SoccerNet/jersey-2023 --split test --num-samples 10
 ```
 
 Test a single tracklet:
