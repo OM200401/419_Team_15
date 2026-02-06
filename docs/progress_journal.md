@@ -11,6 +11,8 @@
 | **Week 11 (03/15 - 03/21)** |                                     |                                                               |
 | **Week 12 (03/22 - 03/28)** |                                     | EvalAI Model Performance (03/26)<br/>Progress Journal (03/26) |
 
+
+
 ---
 
 <details open id="02-02-2026">
@@ -44,6 +46,46 @@
 * Bridgette is creating a docs branch where we can update the progress
 * We meet again on Friday where everyone has completed reproducing the results and we can continue with whoever was able to produce the best results
 * Went over project proposal template to form expectations for necessary work in the next few weeks
+
+</details>
+
+---
+
+---
+
+<details open id="02-06-2026">
+<summary>
+<h2 style="display:inline">Friday, 02/06/2026</h2>
+<h3 style="display:inline">Team Meeting</h3>
+</summary>
+
+---
+
+### Summary 
+* Discussed current progress on reproducing results from research papers
+* Discussed further steps on the project proposal
+* Decided on meeting time for a weekly meeting on **Tuesday 11:30 am** starting next week
+
+
+### Attendance
+
+| Member                | Attendance (Present/Absent) |
+|-----------------------|-----------------------------|
+| **James Birnie**      | **Present**                 | 
+| **Milan Bertolutti**  | **Present**                 |
+| **Kelvin Chen**       | **Present**                 |
+| **Bridgette Hunt**    | **Present**                 |
+| **Om Mistry**         | **Present**                 |
+| **Karim Jassani**     | **Present**                 |
+
+### Minutes
+
+* Om was able to reproduce results from the second research paper but the test accuracy was only 29.31% 
+* Everyone else tried to clone the provided repo from the first research paper but had issues with the environment setup and reproducing results
+* Bridgette is currently working on setting up the environment for the first research paper on her local machine
+* James is going to start working on the Literature Review section of the project proposal
+* Once Bridgette has the baseline model up and running, we will all set it up and then dicuss further gaps to improve performance and accuracy
+* Next meeting on Tuesday to discuss progress
 
 </details>
 
