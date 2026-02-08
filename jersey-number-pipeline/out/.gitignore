@@ -1,0 +1,5 @@
+!.gitignore
+SoccerNetResults/**/*.*
+!SoccerNetResults/final_results.json
+
+
