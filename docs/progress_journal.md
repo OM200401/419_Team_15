@@ -51,8 +51,6 @@
 
 ---
 
----
-
 <details open id="02-06-2026">
 <summary>
 <h2 style="display:inline">Friday, 02/06/2026</h2>
@@ -86,6 +84,70 @@
 * James is going to start working on the Literature Review section of the project proposal
 * Once Bridgette has the baseline model up and running, we will all set it up and then dicuss further gaps to improve performance and accuracy
 * Next meeting on Tuesday to discuss progress
+
+</details>
+
+---
+
+<details open id="02-10-2026">
+<summary>
+<h2 style="display:inline">Tuesday, 02/10/2026</h2>
+<h3 style="display:inline">Team Meeting</h3>
+</summary>
+
+---
+
+### Summary 
+* Base pipeline has been successfully set up and tested locally
+* Reviewed current project proposal status and identified gaps
+* Discussed model improvements and next steps for the project
+* Created detailed action breakdown for remaining proposal sections
+
+### Attendance
+
+| Member                | Attendance (Present/Absent) |
+|-----------------------|-----------------------------|
+| James Birnie          | Present                     | 
+| Milan Bertolutti      | Present                     |
+| Kelvin Chen           | Present                     |
+| Bridgette Hunt        | Present                     |
+| Om Mistry             | Present                     |
+| Karim Jassani         | Present                     |
+
+### Minutes
+
+#### Current Progress
+* Bridgette successfully set up the baseline Koshkina et al. pipeline and reproduced results locally
+* Om tested the legibility classifier: achieved 46.7% legible predictions on test sample (7/15 images) with well-calibrated confidence scores (0.0002–0.9997), showing good separation between legible and illegible players
+* Pipeline setup remains difficult on other machines; team goal is everyone running baseline by end of week
+
+#### Proposal Sections & Assignments
+* **Section 2.1** (Literature Review): James
+* **Section 2.2** (Replication Results): Bridgette
+* **Section 3.1** (Proposed Approach): Om, Karim, Milan (coordinating different components)
+* **Section 3.2** (Model Architecture)
+* **Section 3.3** (Data Preprocessing)
+* **Section 4.1 & 4.2** (Enhancements & Justification)
+
+#### Key Gaps & Improvement Strategy
+**Critical Bottlenecks:**
+* Pipeline reproducibility: difficult to set up on different machines
+* Keyframe selection: not currently implemented before STR, likely causing poor performance on blurry/low-quality frames
+* Model optimization: ResNet34 mentioned in paper as alternative for STR
+
+**Proposed Improvements:**
+* **Option A - Keyframe Identification Module:** Pre-filter frames before STR to improve accuracy (Om leading)
+* **Option B - STR Architecture Enhancement:** Explore ResNet34 for STR improvements (Milan investigating)
+* **Option C - Other Techniques:** To be identified through further research (Karim investigating)
+
+#### Action Items for Next Week
+* [ ] **Bridgette:** Complete Section 2.2—document baseline model results, inference times, and bottlenecks
+* [ ] **James:** Complete Section 2.1—summarize key research papers and findings
+* [ ] **Om:** Design keyframe identification module; update Sections 3.1 & 3.2
+* [ ] **Milan:** Investigate ResNet34 for STR; update Sections 3.1 & 3.2
+* [ ] **Karim:** Research additional improvement techniques; update Sections 3.1 & 3.3
+* [ ] **Kelvin:** Evaluate dockerization to improve reproducibility across machines
+* [ ] **All:** Get baseline pipeline running locally by end of week
 
 </details>
 
