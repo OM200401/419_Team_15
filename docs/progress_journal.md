@@ -120,6 +120,7 @@
 * Bridgette successfully set up the baseline Koshkina et al. pipeline and reproduced results locally
 * Om tested the legibility classifier: achieved 46.7% legible predictions on test sample (7/15 images) with well-calibrated confidence scores (0.0002–0.9997), showing good separation between legible and illegible players
 * Pipeline setup remains difficult on other machines; team goal is everyone running baseline by end of week
+* James starting taking notes on key details of each paper
 
 #### Proposal Sections & Assignments
 * **Section 2.1** (Literature Review): James
