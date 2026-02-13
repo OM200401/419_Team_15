@@ -38,6 +38,9 @@ def get_soccer_net_raw_legibility_results(args, use_filtered = True, filter = 'g
                 updated_tracklets.append(track)
         tracklets = updated_tracklets
 
+    # load model once before the loop
+    legibility_model = lc.load_model(config.dataset['SoccerNet']['legibility_model'], arch=config.dataset['SoccerNet']['legibility_model_arch'])
+
     for directory in tqdm(tracklets):
         track_dir = os.path.join(path_to_images, directory)
         if use_filtered:
@@ -46,7 +49,7 @@ def get_soccer_net_raw_legibility_results(args, use_filtered = True, filter = 'g
             images = os.listdir(track_dir)
         #images = os.listdir(track_dir)
         images_full_path = [os.path.join(track_dir, x) for x in images]
-        track_results = lc.run(images_full_path, config.dataset['SoccerNet']['legibility_model'], threshold=-1, arch=config.dataset['SoccerNet']['legibility_model_arch'])
+        track_results = lc.run(images_full_path, config.dataset['SoccerNet']['legibility_model'], threshold=-1, arch=config.dataset['SoccerNet']['legibility_model_arch'], model=legibility_model)
         results_dict[directory] = track_results
 
     # save results
@@ -88,6 +91,9 @@ def get_soccer_net_legibility_results(args, use_filtered = False, filter = 'sim'
         tracklets = updated_tracklets
 
 
+    # load model once before the loop
+    legibility_model = lc.load_model(config.dataset['SoccerNet']['legibility_model'], arch=config.dataset['SoccerNet']['legibility_model_arch'])
+
     for directory in tqdm(tracklets):
         track_dir = os.path.join(path_to_images, directory)
         if use_filtered:
@@ -95,7 +101,7 @@ def get_soccer_net_legibility_results(args, use_filtered = False, filter = 'sim'
         else:
             images = os.listdir(track_dir)
         images_full_path = [os.path.join(track_dir, x) for x in images]
-        track_results = lc.run(images_full_path, config.dataset['SoccerNet']['legibility_model'], arch=config.dataset['SoccerNet']['legibility_model_arch'], threshold=0.5)
+        track_results = lc.run(images_full_path, config.dataset['SoccerNet']['legibility_model'], arch=config.dataset['SoccerNet']['legibility_model_arch'], threshold=0.5, model=legibility_model)
         legible = list(np.nonzero(track_results))[0]
         if len(legible) == 0:
             illegible_tracklets.append(directory)
@@ -331,7 +337,7 @@ def soccer_net_pipeline(args):
         image_dir = os.path.join(config.dataset['SoccerNet']['working_dir'], config.dataset['SoccerNet'][args.part]['crops_folder'])
 
         command = f"conda run -n {config.str_env} python str.py  {config.dataset['SoccerNet']['str_model']}\
-            --data_root={image_dir} --batch_size=1 --inference --result_file {str_result_file}"
+            --data_root={image_dir} --batch_size=16 --inference --result_file {str_result_file}"
         success = os.system(command) == 0
         print("Done predict numbers")
 
@@ -372,9 +378,9 @@ if __name__ == '__main__':
 
     if not args.train_str:
         if args.dataset == 'SoccerNet':
-            actions = {"soccer_ball_filter": True,
-                       "feat": True,
-                       "filter": True,
+            actions = {"soccer_ball_filter": False,
+                       "feat": False,
+                       "filter": False,
                        "legible": True,
                        "legible_eval": False,
                        "pose": True,

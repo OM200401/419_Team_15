@@ -21,7 +21,7 @@ import numpy as np
 
 # SAM is only used for training, optional for inference
 try:
-    from sam.sam import SAM
+    from sam.sam import SAM  # type: ignore[import-not-found]
     HAS_SAM = True
 except ImportError:
     HAS_SAM = False
@@ -45,7 +45,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 model.eval()   # Set model to evaluate mode
 
             running_loss = 0.0
-            running_corrects = 0
+            running_corrects = torch.tensor(0)
 
             # Iterate over data.
             for inputs, labels, _ in dataloaders[phase]:
@@ -117,7 +117,7 @@ def train_model_with_sam(model, criterion, optimizer, num_epochs=25, ):
                 model.eval()   # Set model to evaluate mode
 
             running_loss = 0.0
-            running_corrects = 0
+            running_corrects = torch.tensor(0)
 
             # Iterate over data.
             for inputs, labels, _ in dataloaders[phase]:
@@ -237,7 +237,7 @@ def train_model_with_sam_and_full_val(model, criterion, optimizer, num_epochs=25
                 continue
 
             running_loss = 0.0
-            running_corrects = 0
+            running_corrects = torch.tensor(0)
 
             # Iterate over data.
             for inputs, labels, _ in dataloaders[phase]:
@@ -289,7 +289,7 @@ def train_model_with_sam_and_full_val(model, criterion, optimizer, num_epochs=25
 
 def test_model(model, subset, result_path=None):
     model.eval()
-    running_corrects = 0
+    running_corrects = torch.tensor(0)
     # Iterate over data.
     temp_max = 500
     temp_count = 0
@@ -353,16 +353,9 @@ def test_model(model, subset, result_path=None):
     return epoch_acc
 
 
-# run inference on a list of files
-def run(image_paths, model_path, threshold=0.5, arch='resnet18'):
-    # setup data
-    dataset = UnlabelledJerseyNumberLegibilityDataset(image_paths, arch=arch)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=4,
-                                                  shuffle=False, num_workers=4)
+# load model once and return it for reuse
+def load_model(model_path, arch='resnet18'):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    cudnn.benchmark = True
-
-    #load model
     state_dict = torch.load(model_path, map_location=device)
     if arch == 'resnet18':
         model_ft = LegibilityClassifier()
@@ -376,6 +369,22 @@ def run(image_paths, model_path, threshold=0.5, arch='resnet18'):
     model_ft.load_state_dict(state_dict)
     model_ft = model_ft.to(device)
     model_ft.eval()
+    return model_ft
+
+# run inference on a list of files
+def run(image_paths, model_path, threshold=0.5, arch='resnet18', model=None):
+    # setup data
+    dataset = UnlabelledJerseyNumberLegibilityDataset(image_paths, arch=arch)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=32,
+                                                  shuffle=False, num_workers=0)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cudnn.benchmark = True
+
+    # use preloaded model if provided, otherwise load from disk
+    if model is None:
+        model_ft = load_model(model_path, arch)
+    else:
+        model_ft = model
 
     # run classifier
     results = []
@@ -428,7 +437,7 @@ if __name__ == '__main__':
                                                    shuffle=True, num_workers=4)
 
     if not args.train and not args.finetune:
-        dataloader_test = torch.utils.data.DataLoader(image_dataset_test, batch_size=4,
+        dataloader_test = torch.utils.data.DataLoader(image_dataset_test, batch_size=4,  # type: ignore[arg-type]
                                                   shuffle=False, num_workers=4)
 
     # use full validation set during training
@@ -442,9 +451,9 @@ if __name__ == '__main__':
         dataloaders = {'train': dataloader_train, 'val': dataloader_full_val}
 
     elif not args.train and not args.finetune:
-        image_datasets = {'test': image_dataset_test}
+        image_datasets = {'test': image_dataset_test}  # type: ignore[possibly-undefined]
         dataset_sizes = {x: len(image_datasets[x]) for x in ['test']}
-        dataloaders = {'test': dataloader_test}
+        dataloaders = {'test': dataloader_test}  # type: ignore[possibly-undefined]
     else:
         image_dataset_val = JerseyNumberLegibilityDataset(os.path.join(args.data, 'val', 'val' + annotations_file),
                                                           os.path.join(args.data, 'val', 'images'), 'val', arch=args.arch)
@@ -478,9 +487,11 @@ if __name__ == '__main__':
         model_ft = model_ft.to(device)
         criterion = nn.BCELoss()
         if args.sam:
+            if not HAS_SAM:
+                raise ImportError("SAM (Sharpness Aware Minimization) is not installed. Install it with: pip install sam-optimizer")
             # Observe that all parameters are being optimized
             base_optimizer = torch.optim.SGD
-            optimizer_ft = SAM(model_ft.parameters(), base_optimizer, lr=0.001, momentum=0.9)
+            optimizer_ft = SAM(model_ft.parameters(), base_optimizer, lr=0.001, momentum=0.9)  # type: ignore[possibly-undefined]
 
             if use_full_validation:
                 model_ft = train_model_with_sam_and_full_val(model_ft, criterion, optimizer_ft, num_epochs=10)
