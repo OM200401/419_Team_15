@@ -46,7 +46,7 @@ def setup_reid(root):
 
         # create the models folder inside repo, weights will be added to that folder later on
         models_folder_path = os.path.join(rep_path, repo_name, "models")
-        os.system(f"mkdir {models_folder_path}")
+        os.makedirs(models_folder_path, exist_ok=True)
 
         url = "https://drive.google.com/uc?export=download&id=1w9yzdP_5oJppGIM4gs3cETyLujanoHK8&confirm=t&uuid=fed3cb8a-1fad-40bd-8922-c41ededc93ae&at=ALgDtsxiC0WTza4g47gqC5VPyWg4:1679009047787"
         save_path = os.path.join(models_folder_path, "dukemtmcreid_resnet50_256_128_epoch_120.ckpt")
@@ -108,9 +108,8 @@ def setup_str(root):
 
     if not env_name in get_conda_envs():
         make_conda_env(env_name, libs="python=3.9")
-        os.system(f"make torch-cu117")
         os.system(f"conda run --live-stream -n {env_name} conda install --name {env_name} pip")
-        os.system(f"conda run --live-stream -n {env_name} pip install -r requirements/core.cu117.txt -e .[train,test]")
+        os.system(f"conda run --live-stream -n {env_name} pip install -r requirements/core.txt -e .[train,test]")
 
     os.chdir(root)
 
@@ -121,8 +120,8 @@ def download_models_common(root_dir):
     url = cfg.dataset['SoccerNet']['pose_model_url']
     models_folder_path = os.path.join(rep_path, repo_name, "checkpoints")
     if not os.path.exists(models_folder_path):
-        os.system(f"mkdir {models_folder_path}")
-    save_path = os.path.join(rep_path, "ViTPose", "checkpoints", "vitpose-h.pth")
+        os.makedirs(models_folder_path, exist_ok=True)
+    save_path = os.path.join(models_folder_path, "vitpose-h.pth")
     if not os.path.isfile(save_path):
         gdown.download(url, save_path)
 

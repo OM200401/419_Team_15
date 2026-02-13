@@ -19,7 +19,13 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 
-from sam.sam import SAM
+# SAM is only used for training, optional for inference
+try:
+    from sam.sam import SAM
+    HAS_SAM = True
+except ImportError:
+    HAS_SAM = False
+    print("Warning: SAM (Sharpness Aware Minimization) not available. Training with SAM will fail, but inference should work.")
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     since = time.time()
@@ -92,6 +98,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     return model
 
 def train_model_with_sam(model, criterion, optimizer, num_epochs=25, ):
+    if not HAS_SAM:
+        raise ImportError("SAM (Sharpness Aware Minimization) is not installed. Install it with: pip install sam-optimizer")
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -204,6 +212,8 @@ def run_full_validation(model, dataloader):
 
 
 def train_model_with_sam_and_full_val(model, criterion, optimizer, num_epochs=25):
+    if not HAS_SAM:
+        raise ImportError("SAM (Sharpness Aware Minimization) is not installed. Install it with: pip install sam-optimizer")
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())

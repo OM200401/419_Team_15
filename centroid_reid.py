@@ -51,7 +51,7 @@ def generate_features(input_folder, output_folder, model_version='res50_market')
         print("using GPU")
     model.eval()
 
-    tracks = os.listdir(input_folder)
+    tracks = [t for t in os.listdir(input_folder) if os.path.isdir(os.path.join(input_folder, t))]
     transforms_base = ReidTransforms(cfg)
     val_transforms = transforms_base.build_transforms(is_train=False)
 
